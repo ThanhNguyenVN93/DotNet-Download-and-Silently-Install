@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -command \"Add-Type -Path 'bin\\\\Debug\\\\AltoHttp.dll'; [AltoHttp.HttpDownloader].GetMethods\\(\\) | Select-Object Name | Sort-Object Name -Unique\")",
+      "Bash(powershell -command \"Add-Type -Path 'bin\\\\Debug\\\\AltoHttp.dll'; [AltoHttp.HttpDownloader].GetEvent\\('ErrorOccured'\\) | Format-List *\")",
+      "Bash(powershell -command ' *)",
+      "Bash(\"C:/Windows/Microsoft.NET/Framework/v4.0.30319/MSBuild.exe\" WindowsFormsApp2.csproj /p:Configuration=Debug)",
+      "Bash(\"C:/Program Files/Microsoft Visual Studio/2022/Community/MSBuild/Current/Bin/MSBuild.exe\" WindowsFormsApp2.csproj /p:Configuration=Debug)",
+      "PowerShell($dll = \"D:\\\\code\\\\WindowsFormsApp2\\\\packages\\\\AltoHttp.1.5.2\\\\lib\\\\net45\\\\AltoHttp.dll\"; [System.Reflection.Assembly]::LoadFile\\($dll\\).GetName\\(\\) | Select-Object Name, Version)"
+    ]
+  }
+}
