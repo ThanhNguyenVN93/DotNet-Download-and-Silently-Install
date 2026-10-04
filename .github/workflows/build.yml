@@ -1,0 +1,54 @@
+name: Build
+
+on:
+  push:
+    branches: [main, master, 'claude/**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - uses: nuget/setup-nuget@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore WindowsFormsApp2.csproj -PackagesDirectory packages
+
+      # The project targets .NET Framework 4.5.2, whose targeting pack is not
+      # installed on the runner. Pull the reference assemblies from NuGet.
+      - name: Get .NET 4.5.2 reference assemblies
+        shell: pwsh
+        run: |
+          nuget install Microsoft.NETFramework.ReferenceAssemblies.net452 -Version 1.0.3 -OutputDirectory refasm
+          $dir = (Resolve-Path "refasm/Microsoft.NETFramework.ReferenceAssemblies.net452.1.0.3/build/.NETFramework/v4.5.2").Path
+          "FRAMEWORK_PATH=$dir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build (Release)
+        run: msbuild WindowsFormsApp2.csproj /p:Configuration=Release /p:FrameworkPathOverride="$env:FRAMEWORK_PATH" /v:minimal
+
+      - name: Collect output
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item bin/Release/*.exe, bin/Release/*.dll, bin/Release/*.config dist/ -ErrorAction SilentlyContinue
+          Compress-Archive -Path dist/* -DestinationPath DotNetDownloader.zip -Force
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DotNetDownloader
+          path: dist/
+
+      - name: Publish release (tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: DotNetDownloader.zip
